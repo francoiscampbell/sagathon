@@ -1,6 +1,5 @@
 from __future__ import print_function
 
-import sys
 from collections import deque
 from threading import Thread
 from types import GeneratorType
