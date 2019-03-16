@@ -29,7 +29,7 @@ class Effect(object, metaclass=EffectMetaclass):
     def __init__(self, value):
         self.type = type(self).__name__
         self.value = value
-        print("making {} effect with value {}".format(self.type, value))
+        # print("making {} effect with value {}".format(self.type, value))
 
     def __call__(self, execution_context: ExecutionContext):
         value = self._get_intercepted_input_value()
@@ -65,7 +65,7 @@ class Call(Effect):
 
     def run(self, execution_context, value):
         fn, args, kwargs = value
-        print("running call effect for fn ", fn)
+        # print("running call effect for fn ", fn)
         return_value = fn(*args, **kwargs)
         return self._resume_execution(execution_context, return_value)
 
@@ -82,7 +82,7 @@ class CallAsync(Call):
 
 class Ret(Effect):
     def run(self, execution_context, value):
-        print("running ret effect with value", value)
+        # print("running ret effect with value", value)
         return execution_context.ret(value)
 
 

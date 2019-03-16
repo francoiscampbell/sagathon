@@ -49,6 +49,16 @@ def my_ret_saga():
 
 def my_sub_saga(text):
     yield Call(print, text)
+    yield Call(my_sub_saga_2, 20)
+
+
+def my_sub_saga_2(val):
+    yield Call(my_sub_saga_3, val + 2)
+
+
+def my_sub_saga_3(val):
+    pass
+    # raise KeyError(val)
 
 
 def my_slow_saga(sleep_time):
