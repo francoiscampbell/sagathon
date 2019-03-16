@@ -30,3 +30,12 @@ class Ret(Effect):
     def run(self):
         print("running ret effect with value", self.value)
         return self.value
+
+
+class NotAnEffectException(Exception):
+    def __init__(self, actual):
+        super(NotAnEffectException, self).__init__(
+            "Yielded value was not an Effect, it was a {} with value {}".format(
+                type(actual), actual
+            )
+        )

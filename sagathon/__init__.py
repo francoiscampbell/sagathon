@@ -19,7 +19,6 @@ def _run(generator_stack, return_stack):
         run_result = return_stack.pop()
         try:
             effect = _send_value(generator, run_result)
-            print("got effect", effect.type)
         except StopIteration as e:
             print("stopping generator", generator)
             return_stack.append(getattr(e, "value", None))
@@ -71,10 +70,7 @@ def _send_value(generator, value):
 
 def _run_effect(effect):
     try:
+        print("running effect", effect.type)
         return effect.run()
     except AttributeError:
-        print(
-            "Yielded value was not an Effect, it was a {}".format(type(effect)),
-            file=sys.stderr,
-        )
-        raise
+        raise effects.NotAnEffectException(effect)

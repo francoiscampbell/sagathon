@@ -37,5 +37,5 @@ def my_io_function(sleep_time):
 
 
 print(run_saga(my_saga))
-print(run_saga(my_slow_saga, 5))
-print(run_saga(my_slow_saga, 10))
+print(run_saga(my_slow_saga, 2))
+print(run_saga(my_slow_saga, 4))
