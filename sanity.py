@@ -6,17 +6,18 @@ from sagathon.effects import Call, Ret
 
 def my_saga():
     print("yielding call to print")
-    yield Call(print, "Hello, World")
+    yield Call(print, "\nHello, World\n")
     text = yield Call(my_ret_saga)
     yield Call(my_sub_saga, text)
+    yield Ret("Done saga")
 
 
 def my_ret_saga():
-    return "Hello, World again"
+    return "\nHello, World again\n"
 
 
 def my_sub_saga(text):
     yield Call(print, text)
 
 
-run_saga(my_saga)
+print(run_saga(my_saga))

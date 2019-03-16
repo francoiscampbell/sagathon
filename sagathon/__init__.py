@@ -1,12 +1,53 @@
 from __future__ import print_function
 
 import sys
+from collections import deque
 from types import GeneratorType
 
 import effects
 
 
-def send_value(generator, value):
+def run_saga(saga, *args, **kwargs):
+    generator = saga(*args, **kwargs)
+    return _run_stacks(deque([generator]), deque([None]))
+
+
+def _run_stacks(generator_stack, return_stack):
+    while generator_stack and return_stack:
+        generator = generator_stack.pop()
+        value = return_stack.pop()
+        try:
+            effect = _send_value(generator, value)
+            print("got effect", effect.type)
+        except StopIteration as e:
+            print("stopping generator", generator)
+            return_stack.append(getattr(e, "value", None))
+            continue
+
+        try:
+            value = _run_effect(effect)
+        except Exception as e:
+            generator_stack.append(generator)
+            return_stack.append(e)
+            continue
+
+        if isinstance(effect, effects.Ret):
+            return_stack.append(value)
+            continue
+
+        if isinstance(value, GeneratorType):
+            generator_stack.append(generator)
+            generator_stack.append(value)
+            return_stack.append(None)
+            continue
+
+        generator_stack.append(generator)
+        return_stack.append(value)
+
+    return return_stack.pop()
+
+
+def _send_value(generator, value):
     if isinstance(value, Exception):
         print("throwing value into generator")
         return generator.throw(value)
@@ -15,33 +56,7 @@ def send_value(generator, value):
         return generator.send(value)
 
 
-def run_saga(saga, *args, **kwargs):
-    generator = saga(*args, **kwargs)
-    return _run_generator(generator)
-
-
-def _run_generator(generator):
-    value = None
-    while True:
-        try:
-            effect = send_value(generator, value)
-            print("got effect", effect.type)
-        except StopIteration as e:
-            print("stopping generator", generator)
-            return getattr(e, "value", None)
-
-        try:
-            value = run_effect(effect)
-        except Exception as e:
-            value = e
-        else:
-            if isinstance(value, GeneratorType):
-                value = _run_generator(value)
-            if isinstance(effect, effects.Ret):
-                return value
-
-
-def run_effect(effect):
+def _run_effect(effect):
     try:
         return effect.run()
     except AttributeError:
