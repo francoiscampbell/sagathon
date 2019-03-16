@@ -1,14 +1,9 @@
 from __future__ import print_function
 
-from functools import reduce
 from threading import Thread
 from types import GeneratorType
 
 from .execution import ExecutionContext, run_execution_context
-
-
-def _compose(sequence, initializer):
-    return reduce(lambda acc, interceptor: interceptor(acc), sequence, initializer)
 
 
 class EffectMetaclass(type):
