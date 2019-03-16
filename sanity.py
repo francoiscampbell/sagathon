@@ -14,6 +14,13 @@ def my_saga():
     yield Call(print, "\nHello, World\n")
     text = yield Call(my_ret_saga)
     yield Call(my_sub_saga, text)
+    yield Call(my_slow_saga, 5)
+    yield Call(print, "\ngot async\n")
+    yield Call(print, "\ngot async\n")
+    yield Call(print, "\ngot async\n")
+    yield Call(print, "\ngot async\n")
+    yield Call(print, "\ngot async\n")
+    yield Call(print, "\ngot async\n")
     yield Ret("\nDone saga\n")
 
 

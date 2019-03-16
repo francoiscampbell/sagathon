@@ -36,7 +36,14 @@ def _run(generator_stack, return_stack):
             continue
 
         if isinstance(effect, effects.CallAsync):
-            _queue_async_task(run_result, generator)
+
+            def async_task():
+                future_value = run_result()
+                generator_stack.append(generator)
+                return_stack.append(future_value)
+                _run(generator_stack, return_stack)
+
+            Thread(target=async_task).start()  # todo threadpool or something
             return
 
         if isinstance(run_result, GeneratorType):
@@ -49,14 +56,6 @@ def _run(generator_stack, return_stack):
         return_stack.append(run_result)
 
     return return_stack.pop()
-
-
-def _queue_async_task(future, generator):
-    def async_task():
-        future_value = future()
-        _run(deque([generator]), deque([future_value]))
-
-    Thread(target=async_task).start()
 
 
 def _send_value(generator, value):
