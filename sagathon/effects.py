@@ -65,7 +65,7 @@ class Call(Effect):
 
     def run(self, execution_context, value):
         fn, args, kwargs = value
-        print("running call effect for fn", fn)
+        print("running call effect for fn ", fn)
         return_value = fn(*args, **kwargs)
         return self._resume_execution(execution_context, return_value)
 
