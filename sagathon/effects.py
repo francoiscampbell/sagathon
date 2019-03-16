@@ -48,9 +48,8 @@ class Effect(object, metaclass=EffectMetaclass):
         return value
 
     def _get_intercepted_return_value(self, return_value):
-        value = self.value
         for interceptor in self._post_run_interceptors:
-            return_value = interceptor(value, return_value)
+            return_value = interceptor(self.value, return_value)
         return return_value
 
     def _call_child_saga(self, execution_context, generator):
