@@ -9,6 +9,25 @@ from sagathon.effects import Call, CallAsync, Ret
 start = time.time()
 
 
+def intercept_call_to_print(value):
+    fn, args, kwargs = value
+    if fn == print:
+        return fn, (args[0] * 2, *args[1:]), kwargs
+    return fn, args, kwargs
+
+
+Call.add_pre_run_interceptor(intercept_call_to_print)
+
+
+def intercept_io_return_value(_, return_value):
+    if isinstance(return_value, int):
+        return return_value * 2
+    return return_value
+
+
+CallAsync.add_post_run_interceptor(intercept_io_return_value)
+
+
 def my_saga():
     print("yielding call to print")
     yield Call(print, "\nHello, World\n")
