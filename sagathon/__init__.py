@@ -14,37 +14,41 @@ def run_saga(saga, *args, **kwargs):
 
 def _run_stacks(generator_stack, return_stack):
     while generator_stack and return_stack:
-        generator = generator_stack.pop()
-        value = return_stack.pop()
-        try:
-            effect = _send_value(generator, value)
-            print("got effect", effect.type)
-        except StopIteration as e:
-            print("stopping generator", generator)
-            return_stack.append(getattr(e, "value", None))
-            continue
-
-        try:
-            value = _run_effect(effect)
-        except Exception as e:
-            generator_stack.append(generator)
-            return_stack.append(e)
-            continue
-
-        if isinstance(effect, effects.Ret):
-            return_stack.append(value)
-            continue
-
-        if isinstance(value, GeneratorType):
-            generator_stack.append(generator)
-            generator_stack.append(value)
-            return_stack.append(None)
-            continue
-
-        generator_stack.append(generator)
-        return_stack.append(value)
+        _step_stacks(generator_stack, return_stack)
 
     return return_stack.pop()
+
+
+def _step_stacks(generator_stack, return_stack):
+    generator = generator_stack.pop()
+    value = return_stack.pop()
+    try:
+        effect = _send_value(generator, value)
+        print("got effect", effect.type)
+    except StopIteration as e:
+        print("stopping generator", generator)
+        return_stack.append(getattr(e, "value", None))
+        return
+
+    try:
+        value = _run_effect(effect)
+    except Exception as e:
+        generator_stack.append(generator)
+        return_stack.append(e)
+        return
+
+    if isinstance(effect, effects.Ret):
+        return_stack.append(value)
+        return
+
+    if isinstance(value, GeneratorType):
+        generator_stack.append(generator)
+        generator_stack.append(value)
+        return_stack.append(None)
+        return
+
+    generator_stack.append(generator)
+    return_stack.append(value)
 
 
 def _send_value(generator, value):
