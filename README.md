@@ -7,10 +7,12 @@ An experiment
 from __future__ import print_function  # if you're using python 2
 
 from sagathon import run_saga
-from sagathon.effects import call
+from sagathon.effects import Call
+
 
 def my_saga():
-    yield call(print, 'Hello, World')
+    yield Call(print, 'Hello, World')
+
 
 run_saga(my_saga)
 ```
