@@ -12,8 +12,8 @@ def _compose(sequence, initializer):
 
 
 class EffectMetaclass(type):
-    def __init__(cls, what, bases, d):
-        super(EffectMetaclass, cls).__init__(what, bases, d)
+    def __init__(cls, *args, **kwargs):
+        super(EffectMetaclass, cls).__init__(*args, **kwargs)
         cls._pre_run_interceptors = []
         cls._post_run_interceptors = []
 
