@@ -1,1 +1,1 @@
-CALL = 'CALL'
+CALL = "CALL"

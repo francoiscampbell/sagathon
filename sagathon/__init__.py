@@ -4,13 +4,15 @@ import sys
 
 from effects.runners import run_effect
 
+
 def send_value(generator, value):
     if isinstance(value, Exception):
-        print('throwing value into generator')
+        print("throwing value into generator")
         return generator.throw(type(value))
     else:
-        print('sending value into generator')
+        print("sending value into generator")
         return generator.send(value)
+
 
 def run_saga(saga, *args, **kwargs):
     generator = saga(*args, **kwargs)
@@ -18,11 +20,11 @@ def run_saga(saga, *args, **kwargs):
     while True:
         try:
             effect = send_value(generator, previous_value)
-            print('got effect', effect)
+            print("got effect", effect)
         except StopIteration:
-            print('stopping')
+            print("stopping")
             break
-        
+
         try:
             previous_value = run_effect(effect)
         except Exception as e:
