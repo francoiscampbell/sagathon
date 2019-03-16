@@ -11,20 +11,19 @@ class Effect(object):
         raise NotImplemented("Cannot run base Effect")
 
 
-class BaseCallEffect(Effect):
+class Call(Effect):
     def __init__(self, fn, *args, **kwargs):
-        super(BaseCallEffect, self).__init__((fn, args, kwargs))
+        super(Call, self).__init__((fn, args, kwargs))
 
-
-class Call(BaseCallEffect):
     def run(self):
         fn, args, kwargs = self.value
         print("running call effect for fn", fn)
         return fn(*args, **kwargs)
 
 
-class CallAsync(BaseCallEffect):
-    pass
+class CallAsync(Call):
+    def run(self):
+        return lambda: super(CallAsync, self).run()
 
 
 class Ret(Effect):
