@@ -26,9 +26,9 @@ def _run_generator(generator):
         try:
             effect = send_value(generator, value)
             print("got effect", effect.type)
-        except StopIteration:
+        except StopIteration as e:
             print("stopping generator", generator)
-            break
+            return getattr(e, "value", None)
 
         try:
             value = run_effect(effect)
@@ -36,8 +36,8 @@ def _run_generator(generator):
             value = e
         else:
             if isinstance(value, GeneratorType):
-                return _run_generator(value)
-            if isinstance(value, effects.Ret):
+                value = _run_generator(value)
+            if isinstance(effect, effects.Ret):
                 return value
 
 
