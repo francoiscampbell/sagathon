@@ -52,12 +52,10 @@ class Effect(object, metaclass=EffectMetaclass):
             return_value = interceptor(self.value, return_value)
         return return_value
 
-    def _call_child_saga(self, execution_context, generator):
-        generator = self._get_intercepted_return_value(generator)
-        return execution_context.call(generator)
-
     def _resume_execution(self, execution_context, return_value):
         return_value = self._get_intercepted_return_value(return_value)
+        if isinstance(return_value, GeneratorType):
+            return execution_context.call(return_value)
         return execution_context.resume(return_value)
 
 
@@ -69,8 +67,6 @@ class Call(Effect):
         fn, args, kwargs = value
         print("running call effect for fn", fn)
         return_value = fn(*args, **kwargs)
-        if isinstance(return_value, GeneratorType):
-            return execution_context.call(return_value)
         return self._resume_execution(execution_context, return_value)
 
 
