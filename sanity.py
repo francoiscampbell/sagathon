@@ -7,7 +7,7 @@ from sagathon import run_saga
 from sagathon.effects import Call, CallAsync
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 
 start = time.time()
@@ -56,11 +56,13 @@ def my_sub_saga(text):
 
 
 def my_sub_saga_2(val):
-    yield Call(my_sub_saga_3, val + 2)
+    yield Call(my_ret_saga)
+    yield Call(my_error_function, val + 4)
 
 
-def my_sub_saga_3(val):
-    raise KeyError(val)
+def my_error_function(val):
+    if val == 24:
+        raise KeyError(val)
 
 
 def my_slow_saga(sleep_time):

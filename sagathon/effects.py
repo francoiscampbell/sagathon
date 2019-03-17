@@ -38,6 +38,7 @@ class Effect(object, metaclass=EffectMetaclass):
     def __call__(self, execution_context: ExecutionContext):
         value = self._get_intercepted_input_value()
         try:
+            log.debug("Running %s effect with value %s", self.type, value)
             return self.run(execution_context, value)
         except Exception as e:
             return execution_context.resume(e)
@@ -47,13 +48,23 @@ class Effect(object, metaclass=EffectMetaclass):
 
     def _get_intercepted_input_value(self):
         value = self.value
+        log.debug("Original value was %s", value)
         for interceptor in self._pre_run_interceptors:
             value = interceptor(value)
+            log.debug(
+                "Pre-run interceptor %s replaced value with %s", interceptor, value
+            )
         return value
 
     def _get_intercepted_return_value(self, return_value):
+        log.debug("Original return value was %s", return_value)
         for interceptor in self._post_run_interceptors:
             return_value = interceptor(self.value, return_value)
+            log.debug(
+                "Post-run interceptor %s replaced value with %s",
+                interceptor,
+                return_value,
+            )
         return return_value
 
     def _resume_execution(self, execution_context, return_value):
@@ -69,7 +80,6 @@ class Call(Effect):
 
     def run(self, execution_context, value):
         fn, args, kwargs = value
-        # print("running call effect for fn ", fn)
         return_value = fn(*args, **kwargs)
         return self._resume_execution(execution_context, return_value)
 

@@ -1,4 +1,3 @@
-import itertools
 import logging
 from collections import deque
 from types import GeneratorType
@@ -7,6 +6,40 @@ from . import effects
 
 
 log = logging.getLogger(__name__)
+
+
+class GeneratorWrapper:
+    def __init__(self, generator):
+        if not isinstance(generator, GeneratorType):
+            raise ValueError(
+                "Expected a generator object, instead got a {} with value {}".format(
+                    type(generator), generator
+                )
+            )
+        self.generator = generator
+
+    def __str__(self):
+        return self.generator.__name__
+
+    def stack_frame_str(self):
+        generator = self.generator
+        filename = generator.gi_code.co_filename
+        if generator.gi_frame:
+            lineno = self.generator.gi_frame.f_lineno
+        else:
+            lineno = "{} (approximate)".format(
+                self.generator.gi_code.co_firstlineno + 1
+            )
+
+        return 'File "{}", line {}, in {}'.format(filename, lineno, self)
+
+    def resume(self, value):
+        if isinstance(value, Exception):
+            log.debug("Throwing value %s into generator %s", value, self)
+            return self.generator.throw(value)
+        else:
+            log.debug("Sending value %s into generator %s", value, self)
+            return self.generator.send(value)
 
 
 class ExecutionContext:
@@ -33,22 +66,20 @@ class ExecutionContext:
 
     def __enter__(self):
         current_generator = self.generator_stack[-1]
-        return current_generator, self.current_value
+        current_value = self.current_value
+        log.debug(
+            "Executing generator %s with value %s", current_generator, current_value
+        )
+        return current_generator, current_value
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         return not (exc_type and exc_val and exc_tb)
 
     def _create_traceback(self):
         return "".join(
-            "\n  {}\n    {}".format(generator, self._oneline(value))
-            for generator, value in itertools.zip_longest(
-                self.generator_stack, self.value_stack
-            )
+            "\n  {}".format(generator.stack_frame_str())
+            for generator in self.generator_stack
         )
-
-    @staticmethod
-    def _oneline(value):
-        return str(value).replace("\n", "\\n")
 
     @property
     def current_generator(self):
@@ -71,22 +102,26 @@ class ExecutionContext:
         self.value_stack.append(value)
 
     def resume(self, value):
+        log.debug(
+            "Resuming execution of generator %s with value %s",
+            self.current_generator,
+            value,
+        )
         self.current_value = value
         return self
 
     def ret(self, value):
+        log.debug(
+            "Returning from generator %s with value %s", self.current_generator, value
+        )
         self.generator_stack.pop()
         self.current_value = value
         return self
 
     def call(self, generator):
-        if not isinstance(generator, GeneratorType):
-            raise ValueError(
-                "Expected a generator object, instead got a {} with value {}".format(
-                    type(generator), generator
-                )
-            )
-        self.generator_stack.append(generator)
+        wrapped = GeneratorWrapper(generator)
+        log.debug("Calling generator %s", wrapped)
+        self.generator_stack.append(wrapped)
         self.push_value(None)
         return self
 
@@ -96,7 +131,7 @@ def run_execution_context(execution_context: ExecutionContext):
         while execution_context:
             with execution_context as (generator, current_value):
                 try:
-                    effect = _send_value(generator, current_value)
+                    effect = generator.resume(current_value)
                 except StopIteration as e:
                     log.debug("Stopping generator %s", generator)
                     execution_context.ret(e.value)
@@ -112,15 +147,6 @@ def run_execution_context(execution_context: ExecutionContext):
     except Exception as e:
         message = str(execution_context)
         raise SagaExecutionException(message) from e
-
-
-def _send_value(generator, value):
-    if isinstance(value, Exception):
-        # print("throwing value into generator")
-        return generator.throw(value)
-    else:
-        # print("sending value into generator")
-        return generator.send(value)
 
 
 class SagaExecutionException(Exception):
