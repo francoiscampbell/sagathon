@@ -1,9 +1,13 @@
 from __future__ import print_function
 
+import logging
 import time
 
 from sagathon import run_saga
 from sagathon.effects import Call, CallAsync, Ret
+
+
+logging.basicConfig(level=logging.INFO)
 
 
 start = time.time()
@@ -16,7 +20,7 @@ def intercept_call_to_print(value):
     return fn, args, kwargs
 
 
-Call.add_pre_run_interceptor(intercept_call_to_print)
+# Call.add_pre_run_interceptor(intercept_call_to_print)
 
 
 def intercept_io_return_value(_, return_value):
@@ -25,26 +29,25 @@ def intercept_io_return_value(_, return_value):
     return return_value
 
 
-CallAsync.add_post_run_interceptor(intercept_io_return_value)
+# CallAsync.add_post_run_interceptor(intercept_io_return_value)
 
 
 def my_saga():
-    print("yielding call to print")
-    yield Call(print, "\nHello, World\n")
+    yield Call(print, "Hello, World")
     text = yield Call(my_ret_saga)
     yield Call(my_sub_saga, text)
-    yield Call(my_slow_saga, 5)
-    yield Call(print, "\ngot async\n")
-    yield Call(print, "\ngot async\n")
-    yield Call(print, "\ngot async\n")
-    yield Call(print, "\ngot async\n")
-    yield Call(print, "\ngot async\n")
-    yield Call(print, "\ngot async\n")
-    yield Ret("\nDone saga\n")
+    async_result = yield Call(my_slow_saga, 5)
+    yield Call(print, "got async result", async_result)
+    yield Call(print, "got async")
+    yield Call(print, "got async")
+    yield Call(print, "got async")
+    yield Call(print, "got async")
+    yield Call(print, "got async")
+    yield Ret("Done saga")
 
 
 def my_ret_saga():
-    return "\nHello, World again\n"
+    return "Hello, World again"
 
 
 def my_sub_saga(text):
@@ -63,15 +66,14 @@ def my_sub_saga_3(val):
 
 def my_slow_saga(sleep_time):
     async_value = yield CallAsync(my_io_function, sleep_time)
-    yield Call(print, "\nasync value\n", async_value)
+    yield Call(print, "async value", async_value)
 
 
 def my_io_function(sleep_time):
     time.sleep(sleep_time)
-    print("app started {} seconds ago".format(time.time() - start))
     return sleep_time ** 2
 
 
-print(run_saga(my_saga))
-print(run_saga(my_slow_saga, 2))
-print(run_saga(my_slow_saga, 4))
+print("my_saga() returned", run_saga(my_saga))
+print("my_slow_saga(2) returned", run_saga(my_slow_saga, 2))
+print("my_slow_saga(4) returned", run_saga(my_slow_saga, 4))

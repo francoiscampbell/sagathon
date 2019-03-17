@@ -1,9 +1,13 @@
 from __future__ import print_function
 
+import logging
 from threading import Thread
 from types import GeneratorType
 
 from .execution import ExecutionContext, run_execution_context
+
+
+log = logging.getLogger(__name__)
 
 
 class EffectMetaclass(type):
@@ -29,7 +33,7 @@ class Effect(object, metaclass=EffectMetaclass):
     def __init__(self, value):
         self.type = type(self).__name__
         self.value = value
-        # print("making {} effect with value {}".format(self.type, value))
+        log.debug("Making %s effect with value %s", self.type, value)
 
     def __call__(self, execution_context: ExecutionContext):
         value = self._get_intercepted_input_value()

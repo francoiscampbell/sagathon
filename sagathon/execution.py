@@ -1,9 +1,12 @@
 import itertools
-import sys
+import logging
 from collections import deque
 from types import GeneratorType
 
 from . import effects
+
+
+log = logging.getLogger(__name__)
 
 
 class ExecutionContext:
@@ -89,7 +92,7 @@ def run_execution_context(execution_context: ExecutionContext):
             try:
                 effect = _send_value(generator, current_value)
             except StopIteration as e:
-                print("stopping generator", generator)
+                log.debug("Stopping generator %s", generator)
                 execution_context.ret(e.value)
                 continue
 
