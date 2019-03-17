@@ -56,8 +56,8 @@ def my_sub_saga(text):
 
 
 def my_sub_saga_2(val):
-    yield Call(my_ret_saga)
     yield Call(my_error_function, val + 4)
+    yield Call(my_ret_saga)
 
 
 def my_error_function(val):

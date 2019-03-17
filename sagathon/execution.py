@@ -1,3 +1,4 @@
+import inspect
 import logging
 from collections import deque
 from types import GeneratorType
@@ -23,15 +24,21 @@ class GeneratorWrapper:
 
     def stack_frame_str(self):
         generator = self.generator
-        filename = generator.gi_code.co_filename
+        filename = inspect.getsourcefile(generator.gi_code)
+        source_lines, first_line_number = inspect.getsourcelines(generator.gi_code)
         if generator.gi_frame:
-            lineno = self.generator.gi_frame.f_lineno
+            current_line_number = inspect.getlineno(generator.gi_frame)
+            current_line_number_str = str(current_line_number)
         else:
-            lineno = "{} (approximate)".format(
-                self.generator.gi_code.co_firstlineno + 1
-            )
+            current_line_number = first_line_number + 1
+            current_line_number_str = "{} (approximate)".format(current_line_number)
 
-        return 'File "{}", line {}, in {}'.format(filename, lineno, self)
+        line_index = current_line_number - first_line_number
+        source_at_line = source_lines[line_index]
+
+        return 'File "{}", line {}, in {}\n{}'.format(
+            filename, current_line_number_str, self, source_at_line.replace("\n", "")
+        )
 
     def resume(self, value):
         if isinstance(value, Exception):
