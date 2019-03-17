@@ -84,12 +84,6 @@ class CallAsync(Call):
         return ExecutionContext()
 
 
-class Ret(Effect):
-    def run(self, execution_context, value):
-        # print("running ret effect with value", value)
-        return execution_context.ret(value)
-
-
 class NotAnEffectException(Exception):
     def __init__(self, actual):
         super(NotAnEffectException, self).__init__(

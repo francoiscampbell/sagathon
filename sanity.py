@@ -4,7 +4,7 @@ import logging
 import time
 
 from sagathon import run_saga
-from sagathon.effects import Call, CallAsync, Ret
+from sagathon.effects import Call, CallAsync
 
 
 logging.basicConfig(level=logging.INFO)
@@ -43,7 +43,7 @@ def my_saga():
     yield Call(print, "got async")
     yield Call(print, "got async")
     yield Call(print, "got async")
-    yield Ret("Done saga")
+    return "Done saga"
 
 
 def my_ret_saga():
@@ -60,8 +60,7 @@ def my_sub_saga_2(val):
 
 
 def my_sub_saga_3(val):
-    pass
-    # raise KeyError(val)
+    raise KeyError(val)
 
 
 def my_slow_saga(sleep_time):
@@ -74,6 +73,6 @@ def my_io_function(sleep_time):
     return sleep_time ** 2
 
 
-print("my_saga() returned", run_saga(my_saga))
-print("my_slow_saga(2) returned", run_saga(my_slow_saga, 2))
-print("my_slow_saga(4) returned", run_saga(my_slow_saga, 4))
+run_saga(my_saga)
+run_saga(my_slow_saga, 2)
+run_saga(my_slow_saga, 4)

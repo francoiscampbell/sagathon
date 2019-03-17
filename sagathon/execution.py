@@ -31,6 +31,13 @@ class ExecutionContext:
             self._create_traceback()
         )
 
+    def __enter__(self):
+        current_generator = self.generator_stack[-1]
+        return current_generator, self.current_value
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return not (exc_type and exc_val and exc_tb)
+
     def _create_traceback(self):
         return "".join(
             "\n  {}\n    {}".format(generator, self._oneline(value))
@@ -45,22 +52,23 @@ class ExecutionContext:
 
     @property
     def current_generator(self):
-        if self.generator_stack:
-            return self.generator_stack[-1]
-        return None
+        return self.generator_stack[-1]
 
     @property
     def current_value(self):
-        if self.value_stack:
-            return self.value_stack[-1]
-        return None
+        return self.value_stack[-1]
 
     @current_value.setter
     def current_value(self, value):
+        self.value_stack[-1] = value
+
+    def pop_value(self):
         if self.value_stack:
-            self.value_stack[-1] = value
-        else:
-            self.value_stack.append(value)
+            return self.value_stack.pop()
+        return None
+
+    def push_value(self, value):
+        self.value_stack.append(value)
 
     def resume(self, value):
         self.current_value = value
@@ -79,30 +87,28 @@ class ExecutionContext:
                 )
             )
         self.generator_stack.append(generator)
-        self.current_value = None
+        self.push_value(None)
         return self
 
 
 def run_execution_context(execution_context: ExecutionContext):
     try:
         while execution_context:
-            generator = execution_context.current_generator
-            current_value = execution_context.current_value
+            with execution_context as (generator, current_value):
+                try:
+                    effect = _send_value(generator, current_value)
+                except StopIteration as e:
+                    log.debug("Stopping generator %s", generator)
+                    execution_context.ret(e.value)
+                    continue
 
-            try:
-                effect = _send_value(generator, current_value)
-            except StopIteration as e:
-                log.debug("Stopping generator %s", generator)
-                execution_context.ret(e.value)
-                continue
+                if not isinstance(effect, effects.Effect):
+                    raise effects.NotAnEffectException(effect)
 
-            if not isinstance(effect, effects.Effect):
-                raise effects.NotAnEffectException(effect)
+                execution_context = effect(execution_context)
+                pass  # for breakpoint
 
-            execution_context = effect(execution_context)
-            pass
-
-        return execution_context.current_value
+        return execution_context.pop_value()
     except Exception as e:
         message = str(execution_context)
         raise SagaExecutionException(message) from e
